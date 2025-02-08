@@ -19,7 +19,7 @@ The following assumptions are made about the environment and the requirements:
     ![Authentication service reverse proxy](1_auth_service_reverse_proxy.svg 'Option 1 Reverse Proxy')
   2. Requests to the authentication service are used to obtain an authentication token that is used for subsequest requests to the Main App. This means that the external endpoints are provided for both authentication service and Main app.
     ![Authentication service token generator](2_auth_service_token_generator.svg 'Option 2 Token Generator')
- 
+
   **I will assume option 1 - reverse proxy**
 
 ## Platform Architecture in Azure
@@ -29,6 +29,27 @@ The following assumptions are made about the environment and the requirements:
 * Azure Front door with NSG firewall will be used to provide the access point for the mobile application
 * Azure Kubernetes Service (AKS) will be used to host the solution applications.
 * Azure Container Registry (ACR) will be used to store the Docker images.
+* When a production deployment is triggered the CICD platform will:
+  * Create a docker image for Authentication service using the jar file artifact.
+  * Create a docker image for Main app using the NodeJS tar artifact.
+  * Create a docker image for the Cronjob which will simply execute the Python cleanup script artifact
+  * Push all images to the ACR
+  * Deploy the application to AKS using Helm
 * Azure Key Vault will be used to securely store and manage sensitive information, such as database credentials and tls certs.
 * Azure Active Directory (AAD) is used for authentication and authorization to KubeAPI.
 * AKS KubeAPI end point will be private and private endpoints access will be provided to the solution vnet for ACR, keyvault and database endpoints.
+
+## Kubernetes Deployment
+
+* A helm chart will be produced for the application to deploy all of the following manifests.
+* The "Auth Service" can be deployed as a Kubernetes deployment and service. The deployment manifest would specify the Docker image to use, the environment variables (such as database credentials), TLS certs for HTTPs and the config map to define reverse proxy routing to the Main App.
+* The "Main App" can also be deployed as a Kubernetes deployment. The manifest would specify the Docker image, environment variables, and any other configuration.
+* The "Cleanup Job" can be deployed as a Kubernetes cron job. The manifest would specify the Docker image, the schedule for running the job, and any other configuration.
+
+## Considerations
+
+* Security: Implement authentication and authorization mechanisms using Entra ID AAD. Ensure that the database credentials are securely stored and accessed.
+* Scalability: Use Kubernetes' built-in scaling mechanisms to scale the deployments and services as needed.
+* Maintainability: Use Kubernetes' rolling updates and rollbacks to deploy latest Kubernetes versions and node images.
+* High Availability: Ensure that the services are deployed with multiple replicas and that the Kubernetes cluster is configured for high availability. This can include using multiple Availability Zones, configuring load balancers, and implementing health checks.
+* Cost effectiveness: Monitor and optimize resource usage to minimize costs.
