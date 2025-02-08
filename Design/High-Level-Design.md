@@ -53,3 +53,135 @@ The following assumptions are made about the environment and the requirements:
 * Maintainability: Use Kubernetes' rolling updates and rollbacks to deploy latest Kubernetes versions and node images.
 * High Availability: Ensure that the services are deployed with multiple replicas and that the Kubernetes cluster is configured for high availability. This can include using multiple Availability Zones, configuring load balancers, and implementing health checks.
 * Cost effectiveness: Monitor and optimize resource usage to minimize costs.
+
+Here is an example of what the Kubernetes deployment manifests might look like:
+```yml
+# Auth Service deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: <ACR_URL>/auth-service:latest
+        ports:
+        - containerPort: 443
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /etc/tls
+        - name: config
+          mountPath: /etc/config
+        env:
+        - name: POSTGRESS_CREDENTIALS
+          valueFrom:
+            secretKeyRef:
+              name: postgress-credentials
+              key: credentials
+      volumes:
+      - name: tls-certs
+        secret:
+          secretName: auth-service-tls
+      - name: config
+        configMap:
+          name: auth-service-config
+
+# Auth Service service
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - name: https
+    port: 443
+    targetPort: 443
+  type: LoadBalancer
+
+# Main App deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: main-app
+  template:
+    metadata:
+      labels:
+        app: main-app
+    spec:
+      containers:
+      - name: main-app
+        image: <ACR_URL>/main-app:latest
+        env:
+        - name: CASSANDRA_CREDENTIALS
+          valueFrom:
+            secretKeyRef:
+              name: cassandra-credentials
+              key: credentials        
+        ports:
+        - containerPort: 443
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /etc/tls
+      volumes:
+      - name: tls-certs
+        secret:
+          secretName: main-app-tls        
+
+# Auth Service config map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+data:
+  reverse-proxy.conf: |
+    server {
+      listen 443 ssl;
+      server_name example.com;
+
+      ssl_certificate /etc/tls/tls.crt;
+      ssl_certificate_key /etc/tls/tls.key;
+
+      location / {
+        proxy_pass http://main-app:443;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+      }
+    }
+
+# Cleanup Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup-job
+spec:
+  schedule:
+    - cron: 0 0 * * *
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cleanup-job
+            image: <ACR_URL>/cleanup-job:latest
+        env:
+        - name: CASSANDRA_CREDENTIALS
+          valueFrom:
+            secretKeyRef:
+              name: cassandra-credentials
+              key: credentials
