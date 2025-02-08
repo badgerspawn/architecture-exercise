@@ -1,0 +1,16 @@
+<svg width="250" height="310" xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny">
+
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" y="25" x="26" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_2" y="55" x="126" text-anchor="middle" font-size="14px">External Request</text>
+  <rect id="svg_3" y="125" x="26" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_4" y="155" x="126" text-anchor="middle" font-size="14px">Auth Service
+(Reverse Proxy)</text>
+  <rect id="svg_5" y="225" x="26" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_6" y="255" x="126" text-anchor="middle" font-size="14px">Main App
+(No external ingress)</text>
+  <line id="svg_7" y2="125" y1="75" x2="126" x1="126" stroke-width="2" stroke="black"/>
+  <line id="svg_8" y2="225" y1="175" x2="126" x1="126" stroke-width="2" stroke="black"/>
+ </g>
+</svg>

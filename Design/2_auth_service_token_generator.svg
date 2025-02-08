@@ -1,0 +1,20 @@
+<svg width="500" height="200" xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny">
+
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" y="23.058" x="34.656" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_2" y="53.058" x="134.656" text-anchor="middle" font-size=" 14px">External Request</text>
+  <rect id="svg_3" y="123.058" x="34.656" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_4" transform="matrix(1 0 0 1 -1.1346 -14.7497)" y="153.058" x="134.656" text-anchor="middle" font-size=" 14px">Auth Service
+   <tspan id="svg_5" dy="1em" x="134.656">​</tspan>-Token Generator
+   <tspan id="svg_6" dy="1em" x="134.656">​</tspan>(Extrernal ingress)</text>
+  <rect id="svg_7" y="23.369" x="269.517" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_8" y="53.369" x="369.517" text-anchor="middle" font-size=" 14px">External Request
+(with token)</text>
+  <rect id="svg_9" y="123.369" x="269.517" width="200" stroke-width="2" stroke="black" height="50" fill="lightblue"/>
+  <text id="svg_10" y="153.369" x="369.517" text-anchor="middle" font-size=" 14px">Main App
+(External ingress)</text>
+  <line id="svg_11" y2="123.058" y1="73.058" x2="134.656" x1="134.656" stroke-width="2" stroke="black"/>
+  <line id="svg_12" y2="123.369" y1="73.369" x2="369.517" x1="369.517" stroke-width="2" stroke="black"/>
+ </g>
+</svg>

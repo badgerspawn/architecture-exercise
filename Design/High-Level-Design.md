@@ -16,9 +16,15 @@ The following assumptions are made about the environment and the requirements:
 * HTTP is specified as the protocol for communications - this raises immediate security concerns. If HTTP is used then security could be increased if this solution was only used in an internal vnet/vpc but intruders who compromise the network or simply internal users without authorised access could still observe the traffic. The specification mentions a mobile app so this implies external access. **I would recommend HTTPS for this solution to protect against MITM or replay attacks**.
 * What is the external endpoint fo this solution? The specification describes the Authentication service checking credentials and forwarding requests to the Main App and Main app responding to period connections from a mobile app. This could be implemented in two ways
   1. ALL traffic is authenticated by the authentication service and requests from the mobile app are assumed to be traffic forwarded by the Authentication Service.  This means that Authentication Service is acting as a reverse proxy for external traffic and the only External endpoint is for Authentication Service.
+    ![Authentication service reverse proxy](1_auth_service_reverse_proxy.svg 'Option 1 Reverse Proxy')
   2. Requests to the authentication service are used to obtain an authentication token that is used for subsequest requests to the Main App. This means that the external endpoints are provided for both authentication service and Main app.
+    ![Authentication service token generator](2_auth_service_token_generator.svg 'Option 2 Token Generator')
+ 
+  **I will assume option 1 - reverse proxy**
 
 ## Platform Architecture in Azure
+
+![Platform Architecture](Highlevelsolution.png 'Platform Architecture')
 
 * Azure Front door with NSG firewall will be used to provide the access point for the mobile application
 * Azure Kubernetes Service (AKS) will be used to host the solution applications.
