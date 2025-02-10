@@ -10,7 +10,7 @@ It was completed within the time allocated.
 
 Given more time I would:
 
-1. Describe the steps I would take to exsure AKS security and high availability.
+1. Describe the steps I would take to ensure AKS security and high availability.
 2. Describe K8s manifest/helm chart in more detail.
 3. Add example CICD workflows and dockerfiles.
 
