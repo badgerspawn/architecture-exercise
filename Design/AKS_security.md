@@ -39,7 +39,16 @@ spec:
         - 169.254.169.254/32
 ```
 
-## Limit contianer and pod access to resources
+## Limit container and pod access to resources
 
-LPA practices need to apply at pod and container level too. They shpould restrict access to filesystem paths and resources. Using a zero trust security module such as AppArmour is a good way of enforcing this.
+```yaml
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+```
 
+LPA practices need to apply at pod and container level too. They should restrict access to filesystem paths and resources. Using a zero trust security module such as AppArmour is a good way of enforcing this.

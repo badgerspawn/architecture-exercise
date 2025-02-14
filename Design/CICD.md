@@ -7,60 +7,83 @@ Use distroless base images for small image size and minimal attack vector
 Main app:
 
 ```sh
-FROM gcr.io/distroless/java17
+# Use a secure, minimal Node.js image
+FROM gcr.io/distroless/nodejs18@sha256:<specific digest version>
+
+# Set non-root user explicitly
+USER nonroot
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the JAR file from the build artifact location to the container
-ARG JAR_FILE=app.jar
-COPY target/${JAR_FILE} app.jar
+# Copy the tar file and extract it
+ARG TAR_FILE=app.tar
+COPY ${TAR_FILE} /app/app.tar
+RUN tar -xf app.tar --strip-components=1 && rm app.tar
 
-# Expose the port (adjust based on your app settings)
+# Expose only necessary ports (my solution is expecting https)
 EXPOSE 443
 
-# Run the application with a non-root user (default in distroless)
-CMD ["java", "-jar", "app.jar"]
+# Set node environment for security
+ENV NODE_ENV=production
+
+# Run with a read-only filesystem
+CMD ["node", "server.js"]
 ```
 
 Authenticator app:
 
 ```sh
-FROM gcr.io/distroless/java17
+FROM gcr.io/distroless/java17@sha256:<specific digest version>
+
+# Set non-root user explicitly
+USER nonroot
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the JAR file from the build artifact location to the container
+# Copy the JAR file with verification (supplied via CICD or KV fteched secret)
 ARG JAR_FILE=app.jar
 COPY target/${JAR_FILE} app.jar
+RUN echo "<expected-sha256> app.jar" | sha256sum --check
 
-# Expose the port (adjust based on your app settings)
-EXPOSE 8080
 
-# Run the application with a non-root user (default in distroless)
-CMD ["java", "-jar", "app.jar"]
+# Expose only necessary ports
+EXPOSE 443
+
+# Run the application with a read-only filesystem
+CMD ["java", "-jar", "/app/app.jar"]
 ```
 
 Cleanup Job
 
 ```sh
-FROM python:3.9-slim
+FROM gcr.io/distroless/python3@sha256:<specific digest version>
 
-# Set the working directory to /app
+# Set non-root user explicitly
+USER nonroot
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the Python script from the build artifact location to the container
+# Copy the script into the container
 ARG CLEANUP_SCRIPT=script.py
 COPY target/${CLEANUP_SCRIPT} script.py
 
-# Install any dependencies required by the script
-RUN pip install -r requirements.txt
+# Copy dependency file and install securely
+COPY target/requirements.txt requirements.txt
+RUN python -m venv /app/venv && \
+    /app/venv/bin/pip install --no-cache-dir -r requirements.txt && \
+    rm -rf ~/.cache/pip
 
-# Make the script executable
-RUN chmod +x script.py
+# Expose necessary ports (if applicable)
+# EXPOSE 8080  # Uncomment if needed
 
-# Set the command to run when the container starts
+# Set environment variables for security
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/app/venv/bin:$PATH"
+
+# Run with a read-only files
 CMD ["python", "script.py"]
 ```
 
