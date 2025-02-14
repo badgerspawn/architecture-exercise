@@ -8,7 +8,7 @@ Main app:
 
 ```sh
 # Use a secure, minimal Node.js image
-FROM gcr.io/distroless/nodejs18@sha256:<specific digest version>
+FROM gcr.io/distroless/nodejs18-debian12:<specific digest version>
 
 # Set non-root user explicitly
 USER nonroot
@@ -28,16 +28,13 @@ EXPOSE 443
 ENV NODE_ENV=production
 
 # Run with a read-only filesystem
-CMD ["node", "server.js"]
+CMD ["server.js"]
 ```
 
 Authenticator app:
 
 ```sh
-FROM gcr.io/distroless/java17@sha256:<specific digest version>
-
-# Set non-root user explicitly
-USER nonroot
+FROM gcr.io/distroless/java17:nonroot
 
 # Set the working directory
 WORKDIR /app
@@ -47,9 +44,11 @@ ARG JAR_FILE=app.jar
 COPY target/${JAR_FILE} app.jar
 RUN echo "<expected-sha256> app.jar" | sha256sum --check
 
-
 # Expose only necessary ports
 EXPOSE 443
+
+# Run application as non-root user
+USER nonroot:nonroot
 
 # Run the application with a read-only filesystem
 CMD ["java", "-jar", "/app/app.jar"]
@@ -58,7 +57,7 @@ CMD ["java", "-jar", "/app/app.jar"]
 Cleanup Job
 
 ```sh
-FROM gcr.io/distroless/python3@sha256:<specific digest version>
+FROM gcr.io/distroless/python3:<specific digest version>
 
 # Set non-root user explicitly
 USER nonroot
@@ -68,10 +67,10 @@ WORKDIR /app
 
 # Copy the script into the container
 ARG CLEANUP_SCRIPT=script.py
-COPY target/${CLEANUP_SCRIPT} script.py
+COPY ${CLEANUP_SCRIPT} script.py
 
 # Copy dependency file and install securely
-COPY target/requirements.txt requirements.txt
+COPY requirements.txt requirements.txt
 RUN python -m venv /app/venv && \
     /app/venv/bin/pip install --no-cache-dir -r requirements.txt && \
     rm -rf ~/.cache/pip
@@ -84,7 +83,7 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/app/venv/bin:$PATH"
 
 # Run with a read-only files
-CMD ["python", "script.py"]
+CMD ["script.py"]
 ```
 
 ## Deployment actions
