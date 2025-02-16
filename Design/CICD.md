@@ -36,6 +36,9 @@ Authenticator app:
 ```sh
 FROM gcr.io/distroless/java17:nonroot
 
+# Set non-root user explicitly
+USER nonroot:nonroot
+
 # Set the working directory
 WORKDIR /app
 
@@ -46,16 +49,33 @@ COPY target/${JAR_FILE} app.jar
 # Expose only necessary ports
 EXPOSE 443
 
-# Run application as non-root user
-USER nonroot:nonroot
-
 # Run the application with a read-only filesystem
-CMD ["java", "-jar", "/app/app.jar"]
+CMD  ["app.jar"]
 ```
 
 Cleanup Job
 
+> [!Note]
+> This is a multistage build to allow for the installation of build dependencies before running in a distroless final image
+
 ```sh
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Copy and install dependencies
+ARG SCRIPT_DEPS=requirements.txt
+COPY ${SCRIPT_DEPS} requirements.txt
+
+# Create virtual environment
+RUN python -m venv /app/venv
+
+# Check if requirements.txt exists and is not empty before installing dependencies
+RUN if [ -s requirements.txt ]; then \
+        /app/venv/bin/pip install --no-cache-dir -r requirements.txt && \
+        rm -rf ~/.cache/pip; \
+    fi
+    
 FROM gcr.io/distroless/python3:<specific digest version>
 
 # Set non-root user explicitly
@@ -64,15 +84,12 @@ USER nonroot
 # Set the working directory
 WORKDIR /app
 
+# Copy only the pre-installed virtual environment from the builder stage
+COPY --from=builder /app/venv /app/venv
+
 # Copy the script into the container
 ARG CLEANUP_SCRIPT=script.py
 COPY ${CLEANUP_SCRIPT} script.py
-
-# Copy dependency file and install securely
-COPY requirements.txt requirements.txt
-RUN python -m venv /app/venv && \
-    /app/venv/bin/pip install --no-cache-dir -r requirements.txt && \
-    rm -rf ~/.cache/pip
 
 # Expose necessary ports (if applicable)
 # EXPOSE 8080  # Uncomment if needed
