@@ -39,10 +39,9 @@ FROM gcr.io/distroless/java17:nonroot
 # Set the working directory
 WORKDIR /app
 
-# Copy the JAR file with verification (supplied via CICD or KV fteched secret)
+# Copy the JAR file 
 ARG JAR_FILE=app.jar
 COPY target/${JAR_FILE} app.jar
-RUN echo "<expected-sha256> app.jar" | sha256sum --check
 
 # Expose only necessary ports
 EXPOSE 443
